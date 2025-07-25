@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, nextTick, watch , onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
 import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
@@ -99,6 +99,16 @@ onMounted(async () => {
   initializeWebRTCManager(); // 2
   initializeSignalingChannel(); // 3
   signaling.connect(); // 4
+  watch(
+  () => state.value.localStream,
+  async (newStream) => {
+    await nextTick(); // Espera a que el DOM esté actualizado
+    if (localVideo.value && newStream) {
+      localVideo.value.srcObject = newStream;
+    }
+  },
+  { immediate: true }
+);
 });
 
 onUnmounted(() => {
@@ -187,7 +197,7 @@ function initializeSignalingChannel() {
       mediaChatStore.setKey('status', 'Desconectado');
       mediaChatStore.setKey('isConnected', false);
     },
-
+    
     // onMessage: El corazón de la lógica. Aquí llegan todos los mensajes de otros pares.
     onMessage: async (data) => {
       // Usamos 'as any' porque TypeScript no puede saber el tipo exacto sin más contexto.
