@@ -13,7 +13,16 @@ export interface PeerState {
   status: 'negotiating' | 'connected' | 'disconnected';
   // Podrías añadir más info como su nombre de usuario si lo envías al conectar
 }
-
+export interface VoiceChatState {
+  myId: string;
+  roomId: string;
+  status: string;
+  isConnected: boolean; // Conexión con el servidor de señalización
+  isInitiator: boolean;
+  isMicEnabled: boolean;
+  localStream: MediaStream | null;
+  peers: Record<string, PeerState>;
+}
 // El store principal de nuestra aplicación
 export const chatStore = map({
   myId: '',
@@ -24,7 +33,16 @@ export const chatStore = map({
   peers: {} as Record<string, PeerState>, // Objeto de pares conectados
   messages: [] as Message[],
 });
-
+export const voiceChatStore = map<VoiceChatState>({
+  myId: '',
+  roomId: '',
+  status: 'Esperando...',
+  isConnected: false,
+  isInitiator: false,
+  isMicEnabled: true,
+  localStream: null,
+  peers: {},
+});
 // Función para añadir un nuevo mensaje al store
 export function addMessage(message: Message) {
   chatStore.setKey('messages', [...chatStore.get().messages, message]);

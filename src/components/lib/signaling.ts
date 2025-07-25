@@ -119,4 +119,9 @@ export class SignalingChannel {
         // El formato que espera tu servidor es correcto
         this.socket.emit('RTCMultiConnection-Message', { remoteUserId, message });
     }
+    disconnect(): void {
+        if (this.socket) {
+            this.socket.disconnect();
+        }
+    }
 }

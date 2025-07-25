@@ -160,7 +160,7 @@ onMounted(() => {
             await webrtc.createOffer(sender);
         } else if (message.isWebRTCSignal) {
             console.info(`[DEBUG] Manejando 'isWebRTCSignal' de ${sender}.`,message);
-            const signal = message.signal.signal ? message.signal.signal : message.signal;
+            const { signal } = message;
             if (signal.type === 'offer') {
                 console.log(`[DEBUG] ...es una oferta (offer). Creando respuesta...`);
                 setPeerState(sender, { status: 'negotiating' });
@@ -203,7 +203,7 @@ onUnmounted(() => {
     console.warn("[DEBUG] Componente desmontado. Cerrando todas las conexiones.");
     webrtc.closeAllConnections();
     if(signaling) {
-      signaling.disconnect(); // Asumiendo que tienes un método disconnect en tu clase
+      signaling.disconnect();
     }
 });
 
