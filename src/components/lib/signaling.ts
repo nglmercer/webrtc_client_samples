@@ -1,17 +1,38 @@
-// signaling.ts (CORREGIDO Y MEJORADO)
+// signaling.ts
 import { io, Socket } from 'socket.io-client';
+
+// TS-NOTE: Todas las interfaces que definían la estructura de datos ahora son tipos de TypeScript.
+// Esto previene errores al construir o recibir mensajes.
 
 interface UserParams {
     userId: string;
     roomId: string;
 }
 
+// TS-NOTE: Definimos los tipos de señal WebRTC para reutilizarlos.
+type WebRTCSignal = RTCSessionDescriptionInit | RTCIceCandidateInit;
+
+// TS-NOTE: Interfaces para los diferentes tipos de mensajes que se pueden enviar.
+interface SignalMessage {
+    isWebRTCSignal: true; // Usamos un literal para que TS pueda diferenciar los tipos de mensaje.
+    sender: string;
+    signal: WebRTCSignal;
+}
+
+interface ParticipationMessage {
+    newParticipationRequest: true;
+    sender: string;
+}
+
+// TS-NOTE: Un tipo de unión para todos los posibles mensajes que se pueden recibir.
+type ReceivedMessage = SignalMessage | ParticipationMessage | { [key: string]: any };
+
 interface Callbacks {
     onConnect: () => void;
     onDisconnect: () => void;
     onMessage: (data: any) => void;
     onUserDisconnected: (userId: string) => void;
-    onNewUserJoined?: (userData: any) => void;
+    onNewUserJoined?: (userData: ParticipationMessage) => void;
     onRoomOwnerChanged: (newOwnerId: string) => void;
 }
 
@@ -19,41 +40,29 @@ interface RoomParams {
     sessionid: string;
     extra: {
         name: string;
-        [key: string]: any;
+        [key: string]: any; // Permite propiedades adicionales.
     };
-}
-
-interface SignalMessage {
-    isWebRTCSignal: boolean;
-    sender: string;
-    signal: any;
-}
-
-interface ParticipationMessage {
-    newParticipationRequest: boolean;
-    sender: string;
 }
 
 interface SocketMessage {
     remoteUserId: string;
-    message: SignalMessage | ParticipationMessage | any;
+    message: ReceivedMessage;
 }
 
 export class SignalingChannel {
-    private socket: Socket | null;
+    // TS-NOTE: Tipamos las propiedades privadas para encapsular y proteger el estado interno.
+    private socket: Socket | null = null;
     private serverUrl: string;
     private userParams: UserParams;
     private callbacks: Callbacks;
 
     constructor(serverUrl: string, userParams: UserParams, callbacks: Callbacks) {
-        this.socket = null;
         this.serverUrl = serverUrl;
-        this.userParams = userParams; // { userId, roomId }
-        // CAMBIO: Añadimos nuevos callbacks para una lógica más robusta
-        this.callbacks = callbacks; // { onConnect, onDisconnect, onMessage, onUserDisconnected, onNewUserJoined, onRoomOwnerChanged }
+        this.userParams = userParams;
+        this.callbacks = callbacks;
     }
 
-    connect(): void {
+    public connect(): void {
         this.socket = io(this.serverUrl, {
             query: { userid: this.userParams.userId, sessionid: this.userParams.roomId }
         });
@@ -61,21 +70,21 @@ export class SignalingChannel {
         this.socket.on('connect', this.callbacks.onConnect);
         this.socket.on('disconnect', this.callbacks.onDisconnect);
        
-        // El servidor envía mensajes genéricos a este evento
-        this.socket.on('RTCMultiConnection-Message', this.callbacks.onMessage);
+        // TS-NOTE: Al recibir un mensaje, lo casteamos a nuestro tipo 'ReceivedMessage' para un manejo seguro.
+        this.socket.on('RTCMultiConnection-Message', (data: any) => {
+             this.callbacks.onMessage(data);
+        });
        
-        // El servidor notifica específicamente cuando alguien se va
-        // CAMBIO: El servidor envía el ID directamente, no dentro de un objeto 'event'
-        this.socket.on('user-disconnected', this.callbacks.onUserDisconnected);
+        this.socket.on('user-disconnected', (userId: string) => {
+            this.callbacks.onUserDisconnected(userId);
+        });
        
-        // NUEVO: Escuchamos el evento para cuando el dueño de la sala cambia
-        this.socket.on('room-owner-changed', this.callbacks.onRoomOwnerChanged);
-        // NUEVO (OPCIONAL PERO RECOMENDADO): Un evento explícito para nuevos usuarios
-        // Aunque tu servidor actual reenvía 'newParticipationRequest', un evento dedicado es más limpio.
-        // Por ahora, lo manejaremos con el reenvío que ya tienes.
+        this.socket.on('room-owner-changed', (newOwnerId: string) => {
+            this.callbacks.onRoomOwnerChanged(newOwnerId);
+        });
     }
    
-    checkPresence(callback: (isRoomExist: boolean) => void): void {
+    public checkPresence(callback: (isRoomExist: boolean) => void): void {
         if (!this.socket) {
             console.error("Socket no conectado.");
             return;
@@ -83,45 +92,46 @@ export class SignalingChannel {
         this.socket.emit('check-presence', this.userParams.roomId, callback);
     }
 
-    openOrJoinRoom(isInitiator: boolean, callback: (response: any) => void): void {
+    public openOrJoinRoom(isInitiator: boolean, callback: (response: any) => void): void {
         if (!this.socket) {
             console.error("Socket no conectado.");
             return;
         }
         const action = isInitiator ? 'open-room' : 'join-room';
-        const params: RoomParams = { sessionid: this.userParams.roomId, extra: { name: 'Usuario' } /* Puedes añadir más datos */ };
+        const params: RoomParams = { sessionid: this.userParams.roomId, extra: { name: 'Usuario' } };
         this.socket.emit(action, params, callback);
     }
    
-    // CAMBIO: Este método ahora lo usará un usuario nuevo para notificar a TODOS en la sala.
-    // El servidor se encargará de reenviarlo al 'owner' o a todos, según su lógica.
-    // El 'peerId' aquí es el 'roomId' que en tu servidor coincide con el 'ownerId' inicial.
-    sendNewParticipationRequest(roomId: string): void {
-        this.sendMessage(roomId, {
+    public sendNewParticipationRequest(roomId: string): void {
+        const message: ParticipationMessage = {
             newParticipationRequest: true,
             sender: this.userParams.userId
-        });
+        };
+        this.sendMessage(roomId, message);
     }
 
-    sendSignal(peerId: string, signal: any): void {
-        this.sendMessage(peerId, {
+    public sendSignal(peerId: string, signal: WebRTCSignal): void {
+        const message: SignalMessage = {
             isWebRTCSignal: true,
             sender: this.userParams.userId,
             signal: signal
-        });
+        };
+        this.sendMessage(peerId, message);
     }
 
-    sendMessage(remoteUserId: string, message: SignalMessage | ParticipationMessage | any): void {
+    private sendMessage(remoteUserId: string, message: ReceivedMessage): void {
         if (!this.socket) {
             console.error("Socket no conectado.");
             return;
         }
-        // El formato que espera tu servidor es correcto
-        this.socket.emit('RTCMultiConnection-Message', { remoteUserId, message });
+        const payload: SocketMessage = { remoteUserId, message };
+        this.socket.emit('RTCMultiConnection-Message', payload);
     }
-    disconnect(): void {
+
+    public disconnect(): void {
         if (this.socket) {
             this.socket.disconnect();
+            this.socket = null;
         }
     }
 }
