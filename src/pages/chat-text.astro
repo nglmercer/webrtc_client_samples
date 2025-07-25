@@ -1,0 +1,26 @@
+---
+// src/pages/chat-text.astro
+import ChatApp from '../components/ChatApp.astro';
+import Chat from '../components/chat.vue';
+// Configuración del servidor Socket.IO
+const SOCKET_URL = "http://localhost:9001";
+
+import Layout from '../layouts/Layout.astro';
+const { roomId } = Astro.params;
+const userId = Astro.url.searchParams.get('userId');
+
+if (!roomId || !userId) {
+    // Si faltan datos, redirigimos al inicio
+    
+}
+console.log({
+	userId,
+	roomId
+})
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+---
+
+<Layout>
+    <Chat client:only="vue"></Chat>
+</Layout>
