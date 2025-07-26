@@ -49,7 +49,7 @@ import { useStore } from '@nanostores/vue';
 import { chatStore, addMessage, setPeerState, removePeer } from './lib/store';
 import { SignalingChannel } from './lib/signaling';
 import { WebRTCManager } from './lib/webrtc';
-
+import apiConfig from './apiConfig';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') as string;
 const roomId = params.get('roomId') as string;
@@ -106,7 +106,7 @@ onMounted(() => {
     },
   });
 
-  const signalingUrl = "http://localhost:9001";
+  const signalingUrl = apiConfig.getFullUrl();
   console.log(`[DEBUG] Creando SignalingChannel para conectar a: ${signalingUrl}`);
   
   signaling = new SignalingChannel(

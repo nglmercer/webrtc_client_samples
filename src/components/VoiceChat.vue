@@ -57,6 +57,7 @@ import { useStore } from '@nanostores/vue';
 import { voiceChatStore, setPeerState, removePeer } from './lib/store';
 import { SignalingChannel } from './lib/signaling';
 import { WebRTCVoiceManager } from './lib/webrtc-voice';
+import apiConfig from './apiConfig';
 
 // --- Inicialización y Estado ---
 const params = new URLSearchParams(window.location.search);
@@ -126,7 +127,7 @@ onMounted(async () => {
   }
 
   signaling = new SignalingChannel(
-    "http://localhost:9001",
+    apiConfig.getFullUrl(),
     { userId, roomId },
     {
       onConnect: () => {

@@ -64,6 +64,7 @@ import { useStore } from '@nanostores/vue';
 import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
 import { SignalingChannel } from './lib/signaling'; 
 import { WebRTCManager } from './lib/webrtc-media'; // ¡Asegúrate de que la ruta sea correcta!
+import apiConfig from './apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---
 const params = new URLSearchParams(window.location.search);
@@ -168,7 +169,7 @@ function initializeWebRTCManager() {
 }
 
 function initializeSignalingChannel() {
-  const signalingUrl = 'http://localhost:9001'; // <-- CAMBIA ESTO A TU URL DE SEÑALIZACIÓN
+  const signalingUrl = apiConfig.getFullUrl();
 
   signaling = new SignalingChannel(signalingUrl, { userId, roomId }, {
     // onConnect: Conectado al servidor. Ahora podemos unirnos a la sala.
