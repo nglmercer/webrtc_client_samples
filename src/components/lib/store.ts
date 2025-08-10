@@ -48,18 +48,40 @@ export function addMessage(message: Message) {
   chatStore.setKey('messages', [...chatStore.get().messages, message]);
 }
 
-// Función para actualizar el estado de un par
-export function setPeerState(peerId: string, state: PeerState) {
+// Función para actualizar el estado de un par en chatStore
+export function setPeerState(peerId: string, state: Partial<PeerState>) {
     const currentPeers = chatStore.get().peers;
     chatStore.setKey('peers', {
         ...currentPeers,
-        [peerId]: state
+        [peerId]: {
+            ...(currentPeers[peerId] || { status: 'negotiating' }),
+            ...state
+        }
     });
 }
 
-// Función para eliminar un par
+// Función para actualizar el estado de un par en voiceChatStore
+export function setVoicePeerState(peerId: string, state: Partial<PeerState>) {
+    const currentPeers = voiceChatStore.get().peers;
+    voiceChatStore.setKey('peers', {
+        ...currentPeers,
+        [peerId]: {
+            ...(currentPeers[peerId] || { status: 'negotiating' }),
+            ...state
+        }
+    });
+}
+
+// Función para eliminar un par de chatStore
 export function removePeer(peerId: string) {
     const currentPeers = { ...chatStore.get().peers };
     delete currentPeers[peerId];
     chatStore.setKey('peers', currentPeers);
+}
+
+// Función para eliminar un par de voiceChatStore
+export function removeVoicePeer(peerId: string) {
+    const currentPeers = { ...voiceChatStore.get().peers };
+    delete currentPeers[peerId];
+    voiceChatStore.setKey('peers', currentPeers);
 }

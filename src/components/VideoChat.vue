@@ -63,7 +63,7 @@ import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
 import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
 import { SignalingChannel } from './lib/signaling'; 
-import { WebRTCManager } from './lib/webrtc-media'; // ¡Asegúrate de que la ruta sea correcta!
+import { MediaWebRTCManager, type MediaWebRTCCallbacks } from './lib/webrtc-media2';
 import apiConfig from './apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---
@@ -77,7 +77,7 @@ const state = useStore(mediaChatStore);
 const localVideo = ref<HTMLVideoElement | null>(null);
 
 // Variables no reactivas para nuestras clases gestoras
-let webrtc: WebRTCManager;
+let webrtc: MediaWebRTCManager;
 let signaling: SignalingChannel;
 
 // --- 2. LÓGICA DEL CICLO DE VIDA ---
@@ -144,23 +144,23 @@ async function initializeMedia() {
 }
 
 function initializeWebRTCManager() {
-  webrtc = new WebRTCManager(
-    // onIceCandidate: Cuando WebRTC genera un candidato, lo enviamos por señalización.
-    (peerId, candidate) => {
-      console.log(`[WebRTC] Enviando candidato ICE a ${peerId}`);
-      signaling.sendSignal(peerId, candidate); // .toJSON() para serializarlo limpiamente
+  webrtc = new MediaWebRTCManager({
+    // onSignalNeeded: Cuando WebRTC genera una señal, la enviamos por señalización.
+    onSignalNeeded: (peerId, signal) => {
+      console.log(`[WebRTC] Enviando señal a ${peerId}`);
+      signaling.sendSignal(peerId, signal);
     },
-    // onStream: Cuando llega un stream remoto, lo guardamos en el estado del par.
-    (peerId, stream) => {
+    // onRemoteStreamAdded: Cuando llega un stream remoto, lo guardamos en el estado del par.
+    onRemoteStreamAdded: (peerId, stream) => {
       console.log(`[WebRTC] Stream recibido de ${peerId}`);
       setPeerState(peerId, { stream: stream });
     },
     // onConnectionStateChange: Actualizamos el estado de la conexión para la UI.
-    (peerId, status) => {
+    onConnectionStateChange: (peerId, status) => {
       console.log(`[WebRTC] Estado de conexión con ${peerId} cambió a: ${status}`);
       setPeerState(peerId, { status });
     }
-  );
+  });
 
   // Pasamos el stream local al gestor
   if (state.value.localStream) {
@@ -212,8 +212,7 @@ function initializeSignalingChannel() {
       if (message.newParticipationRequest) {
         console.log(`[Signaling] ${sender} solicita unirse. Creando oferta...`);
         setPeerState(sender, {}); // Crea una entrada para el nuevo par en el store
-        const offer = await webrtc.createOffer(sender);
-        signaling.sendSignal(sender, offer);
+        await webrtc.createOffer(sender);
       } 
       // CASO 2: Es una señal WebRTC (oferta, respuesta o candidato).
       else if (message.isWebRTCSignal) {
@@ -222,8 +221,7 @@ function initializeSignalingChannel() {
         if (signal.type === 'offer') {
           console.log(`[Signaling] Oferta recibida de ${sender}. Creando respuesta...`);
           setPeerState(sender, {}); // Asegura que el par exista en el estado
-          const answer = await webrtc.handleOffer(sender, signal);
-          signaling.sendSignal(sender, answer);
+          await webrtc.handleOffer(sender, signal);
         } 
         else if (signal.type === 'answer') {
           console.log(`[Signaling] Respuesta recibida de ${sender}.`);
@@ -231,7 +229,7 @@ function initializeSignalingChannel() {
         }
         else if (signal.candidate) {
           console.log(`[Signaling] Candidato ICE recibido de ${sender}.`);
-          await webrtc.addIceCandidate(sender, signal);
+          await webrtc.addIceCandidate(sender, signal.candidate);
         }
       }
     },

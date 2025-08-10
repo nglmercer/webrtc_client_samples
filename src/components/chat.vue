@@ -48,7 +48,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useStore } from '@nanostores/vue';
 import { chatStore, addMessage, setPeerState, removePeer } from './lib/store';
 import { SignalingChannel } from './lib/signaling';
-import { WebRTCManager } from './lib/webrtc';
+import { DataWebRTCManager,type DataWebRTCCallbacks } from './lib/webrtc-data';
 import apiConfig from './apiConfig';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') as string;
@@ -63,7 +63,7 @@ const state = useStore(chatStore);
 const newMessage = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 
-let webrtc: WebRTCManager;
+let webrtc: DataWebRTCManager;
 let signaling: SignalingChannel;
 
 onMounted(() => {
@@ -75,14 +75,14 @@ onMounted(() => {
   chatStore.setKey('peers', {});
   chatStore.setKey('messages', []);
 
-  webrtc = new WebRTCManager({
+  const dataCallbacks: DataWebRTCCallbacks = {
     onSignalNeeded: (peerId, signal) => {
-      console.log(`%c[DEBUG] WebRTCManager -> onSignalNeeded para ${peerId}. Enviando señal...`, 'color: orange;');
+      console.log(`%c[DEBUG] DataWebRTC -> onSignalNeeded para ${peerId}. Enviando señal...`, 'color: orange;');
       console.log({signal});
       signaling.sendSignal(peerId, signal);
     },
     onDataChannelMessage: (peerId, messageText) => {
-      console.log(`[DEBUG] WebRTCManager -> onDataChannelMessage de ${peerId}:`, messageText);
+      console.log(`[DEBUG] DataWebRTC -> onDataChannelMessage de ${peerId}:`, messageText);
       try {
         const message = JSON.parse(messageText);
         addMessage({ ...message, timestamp: Date.now() });
@@ -91,7 +91,7 @@ onMounted(() => {
       }
     },
     onConnectionStateChange: (peerId, connectionState) => {
-      console.info(`%c[DEBUG] WebRTCManager -> onConnectionStateChange para ${peerId}: ${connectionState}`, 'color: lightblue;');
+      console.info(`%c[DEBUG] DataWebRTC -> onConnectionStateChange para ${peerId}: ${connectionState}`, 'color: lightblue;');
       if (connectionState === 'connected') {
         setPeerState(peerId, { status: 'connected' });
         chatStore.setKey('status', `Conectado a ${peerId}.`);
@@ -104,7 +104,13 @@ onMounted(() => {
         }
       }
     },
-  });
+    onPrivateMessage: (fromPeerId, toPeerId, message) => {
+      console.log(`[DEBUG] Mensaje privado de ${fromPeerId} para ${toPeerId}: ${message}`);
+      // Aquí podrías manejar mensajes privados si los implementas en el futuro
+    }
+  };
+
+  webrtc = new DataWebRTCManager(dataCallbacks);
 
   const signalingUrl = apiConfig.getFullUrl();
   console.log(`[DEBUG] Creando SignalingChannel para conectar a: ${signalingUrl}`);
@@ -212,7 +218,7 @@ function sendMessage() {
   const messagePayload = { senderId: userId, senderName: userId, text: newMessage.value.trim() };
   const messageString = JSON.stringify(messagePayload);
   addMessage({ ...messagePayload, timestamp: Date.now() });
-  webrtc.broadcastMessage(messageString);
+  webrtc.sendChatMessage('broadcast', messageString);
   newMessage.value = '';
 }
 

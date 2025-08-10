@@ -54,9 +54,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
-import { voiceChatStore, setPeerState, removePeer } from './lib/store';
+import { voiceChatStore, setVoicePeerState, removeVoicePeer } from './lib/store';
 import { SignalingChannel } from './lib/signaling';
-import { WebRTCVoiceManager } from './lib/webrtc-voice';
+import { VoiceWebRTCManager, type VoiceWebRTCCallbacks } from './lib/webrtc-voice2';
 import apiConfig from './apiConfig';
 
 // --- Inicialización y Estado ---
@@ -68,7 +68,7 @@ const isListener = params.get('mode') === 'listen';
 const state = useStore(voiceChatStore);
 const remoteAudioContainer = ref<HTMLElement | null>(null);
 
-let webrtc: WebRTCVoiceManager;
+let webrtc: VoiceWebRTCManager;
 let signaling: SignalingChannel;
 
 // --- Lógica del Ciclo de Vida del Componente ---
@@ -100,7 +100,7 @@ onMounted(async () => {
      voiceChatStore.setKey('status', 'Modo escucha. Conectando...');
   }
   
-  webrtc = new WebRTCVoiceManager({
+  webrtc = new VoiceWebRTCManager({
     onSignalNeeded: (peerId, signal) => {
       signaling.sendSignal(peerId, signal);
     },
@@ -110,7 +110,7 @@ onMounted(async () => {
     onConnectionStateChange: (peerId, connectionState) => {
       console.log(`[WebRTC] Estado de conexión con ${peerId}: ${connectionState}`);
       if (connectionState === 'connected') {
-        setPeerState(peerId, { status: 'connected' });
+        setVoicePeerState(peerId, { status: 'connected' });
         voiceChatStore.setKey('status', `Conectado a ${peerId}.`);
       } else if (['disconnected', 'failed', 'closed'].includes(connectionState)) {
         if(state.value.peers[peerId]?.status !== 'disconnected') {
@@ -119,6 +119,10 @@ onMounted(async () => {
         }
       }
     },
+    onPeerDisconnected: (peerId) => {
+      console.log(`[WebRTC] Peer ${peerId} disconnected`);
+      handleUserDisconnected(peerId);
+    }
   });
 
   if (state.value.localStream) {
@@ -174,16 +178,16 @@ onMounted(async () => {
         
         // --- Lógica de Desempate (Tie-Breaking) ---
         // Comparamos nuestro ID con el del remitente. El que sea "menor" alfabéticamente
-        // será el "polite peer" (el que cede) y el "mayor" será el "impolite peer" (el que insiste).
+        // será el que inicia la llamada (caller) y el "mayor" será el que espera (callee).
         // En nuestro caso, haremos que el de ID menor sea el que llame.
         const amITheCaller = userId < sender;
 
         if (message.newParticipationRequest) {
           // Un nuevo usuario anuncia su presencia.
-          // Solo iniciamos la llamada si nuestro ID es menor que el de él.
+          // El usuario con ID MENOR debe iniciar la llamada hacia el nuevo usuario.
           if (amITheCaller) {
             console.log(`[Signal] Nuevo usuario '${sender}' ha entrado. Mi ID es menor, así que YO le llamo.`);
-            setPeerState(sender, { status: 'negotiating' });
+            setVoicePeerState(sender, { status: 'negotiating' });
             await webrtc.createOffer(sender);
           } else {
             console.log(`[Signal] Nuevo usuario '${sender}' ha entrado. Mi ID es mayor, así que ESPERO su llamada.`);
@@ -200,7 +204,7 @@ onMounted(async () => {
             // Esto es un "glare". Debo ignorar su oferta y continuar con la mía.
             if (!amITheCaller) {
                 console.log(`[Signal] Oferta recibida de '${sender}'. Mi ID es mayor, así que la acepto y respondo.`);
-                setPeerState(sender, { status: 'negotiating' });
+                setVoicePeerState(sender, { status: 'negotiating' });
                 await webrtc.handleOffer(sender, signal);
             } else {
                 console.warn(`[Signal] GLARE detectado. Recibí una oferta de '${sender}', pero yo soy el que debe llamar. Ignorando su oferta.`);
@@ -261,7 +265,7 @@ function handleRemoteStream(peerId: string, stream: MediaStream) {
 
 function handleUserDisconnected(peerId: string) {
   webrtc.closeConnection(peerId);
-  removePeer(peerId);
+  removeVoicePeer(peerId);
   const audio = document.getElementById(`audio-${peerId}`);
   if (audio) {
     audio.remove();
