@@ -55,8 +55,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 import { voiceChatStore, setVoicePeerState, removeVoicePeer } from './lib/store';
-import { SignalingChannel } from './lib/signaling';
-import { VoiceWebRTCManager, type VoiceWebRTCCallbacks } from './lib/webrtc-voice2';
+import { SignalingChannel } from './lib/index';
+import { VoiceWebRTCManager, type VoiceWebRTCCallbacks } from './lib/index';
 import apiConfig from './apiConfig';
 
 // --- Inicialización y Estado ---

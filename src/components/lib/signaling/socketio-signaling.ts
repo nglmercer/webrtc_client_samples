@@ -98,7 +98,7 @@ export class SignalingChannel {
             return;
         }
         const action = isInitiator ? 'open-room' : 'join-room';
-        const params: RoomParams = { sessionid: this.userParams.roomId, extra: { name: 'Usuario' } };
+        const params: RoomParams = { sessionid: this.userParams.roomId, extra: { name: this.userParams.roomId } };
         this.socket.emit(action, params, callback);
     }
    

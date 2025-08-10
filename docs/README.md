@@ -1,5 +1,152 @@
 # Librería WebRTC Unificada
 
+> **Versión 2.0** - Ahora con soporte para Socket.IO y WebSocket nativo
+
+Una librería completa y flexible para implementar comunicaciones WebRTC con soporte para múltiples tipos de transporte de señalización.
+
+## 🚀 Características Principales
+
+- ✅ **Dual Transport**: Socket.IO y WebSocket nativo
+- ✅ **Configuración Centralizada**: Un solo punto de configuración
+- ✅ **Modular**: Importa solo lo que necesitas
+- ✅ **Compatible**: Mantiene compatibilidad con código existente
+- ✅ **TypeScript**: Completamente tipado
+- ✅ **Extensible**: Fácil agregar nuevos transportes
+
+## 📦 Instalación Rápida
+
+```typescript
+// Importación básica
+import { 
+  useSocketIO,        // o useWebSocket
+  createSignalingChannel,
+  createDataManager,
+  createMediaManager,
+  createVoiceManager
+} from './lib/index.js';
+
+// Configurar transporte (una vez)
+useSocketIO('http://localhost:3000');  // Socket.IO
+// o
+useWebSocket('ws://localhost:3000');   // WebSocket nativo
+
+// Usar normalmente
+const signalingChannel = createSignalingChannel(userParams, callbacks);
+const dataManager = createDataManager(callbacks);
+```
+
+## 🏗️ Estructura del Proyecto
+
+```
+src/components/lib/
+├── core/                    # Funcionalidad base
+│   ├── config.ts           # Configuración global
+│   └── webrtc-base.ts      # Clase base WebRTC
+├── signaling/              # Canales de señalización
+│   ├── signaling-factory.ts    # Factory para crear canales
+│   ├── socketio-signaling.ts   # Implementación Socket.IO
+│   └── websocket-signaling.ts  # Implementación WebSocket
+├── webrtc/                 # Implementaciones específicas
+│   ├── webrtc-data.ts      # Chat/datos
+│   ├── webrtc-media.ts     # Video/audio
+│   └── webrtc-voice.ts     # Solo voz
+├── utils/                  # Utilidades
+│   ├── ws-adapter.ts       # Adaptador WebSocket
+│   └── ClientLogger.ts     # Sistema de logging
+└── index.ts               # Punto de entrada principal
+```
+
+## 📚 Documentación
+
+- **[Documentación Completa](./LIBRARY_DOCUMENTATION.md)** - Guía detallada de uso
+- **[Guía de Migración](./MIGRATION_GUIDE.md)** - Cómo migrar desde la versión anterior
+
+## 🔄 Migración desde Versión Anterior
+
+**Antes:**
+```typescript
+import { SignalingChannel } from './lib/signaling.js';
+import { DataWebRTCManager } from './lib/webrtc-data.js';
+
+const signaling = new SignalingChannel(url, userParams, callbacks);
+const dataManager = new DataWebRTCManager(callbacks);
+```
+
+**Ahora:**
+```typescript
+import { createSignalingChannel, createDataManager } from './lib/index.js';
+
+const signaling = createSignalingChannel(userParams, callbacks);
+const dataManager = createDataManager(callbacks);
+```
+
+## 🌟 Ejemplos de Uso
+
+### Chat de Texto
+```typescript
+import { useSocketIO, createSignalingChannel, createDataManager } from './lib/index.js';
+
+useSocketIO('http://localhost:3000');
+const signaling = createSignalingChannel(userParams, callbacks);
+const dataManager = createDataManager(callbacks);
+
+dataManager.sendChatMessage('broadcast', 'Hola mundo!');
+```
+
+### Video Conferencia
+```typescript
+import { useWebSocket, createSignalingChannel, createMediaManager } from './lib/index.js';
+
+useWebSocket('ws://localhost:3000');
+const signaling = createSignalingChannel(userParams, callbacks);
+const mediaManager = createMediaManager(callbacks);
+
+const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+mediaManager.setLocalStream(stream);
+```
+
+## ⚙️ Configuración Avanzada
+
+```typescript
+import { configureWebRTCLib } from './lib/index.js';
+
+configureWebRTCLib({
+  signaling: {
+    transport: 'websocket',
+    url: 'ws://localhost:3000',
+    options: {
+      websocket: {
+        reconnection: true,
+        reconnectionAttempts: 5,
+        compression: true
+      }
+    }
+  },
+  webrtc: {
+    iceServers: {
+      iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }]
+    }
+  }
+});
+```
+
+## 🔧 Desarrollo
+
+```bash
+# Instalar dependencias
+npm install
+
+# Ejecutar en desarrollo
+npm run dev
+
+# Construir para producción
+npm run build
+```
+
+## 📄 Licencia
+
+MIT License - Ver archivo LICENSE para más detalles.
+
 Esta librería proporciona una base común para manejar conexiones WebRTC con extensiones especializadas para diferentes tipos de comunicación.
 
 ## Estructura de la Librería

@@ -1,6 +1,6 @@
 // webrtc-data.ts - Extensión para manejo de datos (chat)
 
-import { BaseWebRTCManager,type BaseWebRTCCallbacks } from './webrtc-base';
+import { BaseWebRTCManager, type BaseWebRTCCallbacks } from '../core/webrtc-base.js';
 
 // Callbacks específicos para datos
 export interface DataWebRTCCallbacks extends BaseWebRTCCallbacks {

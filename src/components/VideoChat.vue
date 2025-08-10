@@ -62,8 +62,8 @@ import { ref, nextTick, watch , onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
 import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
-import { SignalingChannel } from './lib/signaling'; 
-import { MediaWebRTCManager, type MediaWebRTCCallbacks } from './lib/webrtc-media2';
+import { SignalingChannel } from './lib/index';
+import { MediaWebRTCManager, type MediaWebRTCCallbacks } from './lib/index';
 import apiConfig from './apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---

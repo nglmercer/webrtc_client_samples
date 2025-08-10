@@ -1,6 +1,6 @@
 // webrtc-media.ts - Extensión para manejo de video y audio
 
-import { BaseWebRTCManager,type BaseWebRTCCallbacks } from './webrtc-base';
+import { BaseWebRTCManager, type BaseWebRTCCallbacks } from '../core/webrtc-base.js';
 
 // Callbacks específicos para media (video/audio)
 export interface MediaWebRTCCallbacks extends BaseWebRTCCallbacks {

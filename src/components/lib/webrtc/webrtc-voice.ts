@@ -1,6 +1,6 @@
 // webrtc-voice.ts - Extensión para manejo de voz V2
 
-import { BaseWebRTCManager,type BaseWebRTCCallbacks } from './webrtc-base';
+import { BaseWebRTCManager, type BaseWebRTCCallbacks } from '../core/webrtc-base.js';
 
 // Callbacks específicos para voz
 export interface VoiceWebRTCCallbacks extends BaseWebRTCCallbacks {
