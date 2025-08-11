@@ -166,7 +166,8 @@ onMounted(async () => {
         voiceChatStore.setKey('status', 'Desconectado del servidor. Recarga la página.');
         webrtc.closeAllConnections();
       },
-     onMessage: async ({ sender, message }) => {
+     onMessage: async ({ extra, message }) => {
+        const sender = message.sender;
         if (sender === userId) return; // Ignorar mensajes propios
 
         // Evitar procesar múltiples mensajes de negociación para el mismo par
@@ -176,39 +177,23 @@ onMounted(async () => {
           // return; // Se puede habilitar si se vuelve muy ruidoso
         }
         
-        // --- Lógica de Desempate (Tie-Breaking) ---
-        // Comparamos nuestro ID con el del remitente. El que sea "menor" alfabéticamente
-        // será el que inicia la llamada (caller) y el "mayor" será el que espera (callee).
-        // En nuestro caso, haremos que el de ID menor sea el que llame.
-        const amITheCaller = userId < sender;
+        console.log(`[Signal] Procesando mensaje de '${sender}':`, message);
 
         if (message.newParticipationRequest) {
           // Un nuevo usuario anuncia su presencia.
-          // El usuario con ID MENOR debe iniciar la llamada hacia el nuevo usuario.
-          if (amITheCaller) {
-            console.log(`[Signal] Nuevo usuario '${sender}' ha entrado. Mi ID es menor, así que YO le llamo.`);
-            setVoicePeerState(sender, { status: 'negotiating' });
-            await webrtc.createOffer(sender);
-          } else {
-            console.log(`[Signal] Nuevo usuario '${sender}' ha entrado. Mi ID es mayor, así que ESPERO su llamada.`);
-          }
+          // El usuario que YA ESTABA en la sala debe iniciar la llamada hacia el nuevo usuario.
+          console.log(`[Signal] Nuevo usuario '${sender}' ha entrado. Como ya estaba en la sala, YO le llamo.`);
+          setVoicePeerState(sender, { status: 'negotiating' });
+          await webrtc.createOffer(sender);
         } 
         else if (message.isWebRTCSignal) {
           const { signal } = message;
 
           if (signal.type === 'offer') {
-            // Recibimos una oferta.
-            // Si hay un conflicto (yo también quería llamar), la regla de desempate decide.
-            // Si mi ID es mayor (amITheCaller es false), está bien, acepto la oferta.
-            // Si mi ID es menor (amITheCaller es true), yo debería haber sido el que llamaba.
-            // Esto es un "glare". Debo ignorar su oferta y continuar con la mía.
-            if (!amITheCaller) {
-                console.log(`[Signal] Oferta recibida de '${sender}'. Mi ID es mayor, así que la acepto y respondo.`);
-                setVoicePeerState(sender, { status: 'negotiating' });
-                await webrtc.handleOffer(sender, signal);
-            } else {
-                console.warn(`[Signal] GLARE detectado. Recibí una oferta de '${sender}', pero yo soy el que debe llamar. Ignorando su oferta.`);
-            }
+            // Recibimos una oferta. La aceptamos siempre.
+            console.log(`[Signal] Oferta recibida de '${sender}'. Aceptando y respondiendo.`);
+            setVoicePeerState(sender, { status: 'negotiating' });
+            await webrtc.handleOffer(sender, signal);
           } 
           else if (signal.type === 'answer') {
             console.log(`[Signal] Respuesta recibida de '${sender}'.`);

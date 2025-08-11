@@ -146,7 +146,6 @@ async function initializeMedia() {
 }
 
 function initializeWebRTCManager() {
-  useWebSocket(apiConfig.getFullUrl());
 
   webrtc = createMediaManager({
     // onSignalNeeded: Cuando WebRTC genera una señal, la enviamos por señalización.
@@ -174,8 +173,9 @@ function initializeWebRTCManager() {
 
 function initializeSignalingChannel() {
   const signalingUrl = apiConfig.getFullUrl();
+  useWebSocket(signalingUrl);
 
-  signaling = new SignalingChannel(signalingUrl, { userId, roomId }, {
+  signaling = createSignalingChannel({ userId, roomId }, {
     // onConnect: Conectado al servidor. Ahora podemos unirnos a la sala.
     onConnect: () => {
       mediaChatStore.setKey('status', 'Conectado a señalización. Uniéndose a la sala...');
@@ -204,13 +204,12 @@ function initializeSignalingChannel() {
     },
     
     // onMessage: El corazón de la lógica. Aquí llegan todos los mensajes de otros pares.
-    onMessage: async (data) => {
-      // Usamos 'as any' porque TypeScript no puede saber el tipo exacto sin más contexto.
-      // En una app más compleja, se usarían 'type guards'.
-      const message = (data as any).message; 
-      const sender = (data as any).sender;
-      
+    onMessage: async ({message,sender}) => {
       console.log(`[Signaling] Mensaje recibido de ${sender}:`, message);
+      if (!sender){
+        console.log("No hay sender",sender,message)
+        return;
+      }
 
       // CASO 1: Un nuevo usuario quiere unirse (lo recibe el 'dueño' de la sala).
       if (message.newParticipationRequest) {
