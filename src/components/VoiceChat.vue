@@ -54,10 +54,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
-import { voiceChatStore, setVoicePeerState, removeVoicePeer } from './lib/store';
-import { SignalingChannel } from './lib/index';
-import { VoiceWebRTCManager, type VoiceWebRTCCallbacks,createVoiceManager,useWebSocket,useSocketIO,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
-import apiConfig from './apiConfig';
+import { voiceChatStore, setVoicePeerState, removeVoicePeer } from '../lib/store';
+import { SignalingChannel } from '../lib/index';
+import { VoiceWebRTCManager, type VoiceWebRTCCallbacks,createVoiceManager,useWebSocket,useSocketIO,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/index';
+import apiConfig from '../lib/apiConfig';
 
 // --- Inicialización y Estado ---
 const params = new URLSearchParams(window.location.search);

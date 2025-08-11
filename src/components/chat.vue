@@ -46,9 +46,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useStore } from '@nanostores/vue';
-import { chatStore, addMessage, setPeerState, removePeer } from './lib/store';
-import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
-import apiConfig from './apiConfig';
+import { chatStore, addMessage, setPeerState, removePeer } from '../lib/store';
+import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/index';
+import apiConfig from '../lib/apiConfig';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') as string;
 const roomId = params.get('roomId') as string;

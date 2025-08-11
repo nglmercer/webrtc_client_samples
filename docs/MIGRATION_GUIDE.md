@@ -37,7 +37,7 @@ src/components/lib/
 │   ├── signaling-factory.ts
 │   ├── socketio-signaling.ts
 │   └── websocket-signaling.ts
-├── webrtc/
+├── webrtc_spec/
 │   ├── webrtc-data.ts
 │   ├── webrtc-media.ts
 │   └── webrtc-voice.ts
@@ -73,9 +73,9 @@ import {
 **Ahora (Opción 2 - Importaciones específicas):**
 ```typescript
 import { SignalingChannelFactory } from './lib/signaling/signaling-factory.js';
-import { DataWebRTCManager } from './lib/webrtc/webrtc-data.js';
-import { MediaWebRTCManager } from './lib/webrtc/webrtc-media.js';
-import { VoiceWebRTCManager } from './lib/webrtc/webrtc-voice.js';
+import { DataWebRTCManager } from './lib/webrtc_spec/webrtc-data.js';
+import { MediaWebRTCManager } from './lib/webrtc_spec/webrtc-media.js';
+import { VoiceWebRTCManager } from './lib/webrtc_spec/webrtc-voice.js';
 ```
 
 ### 2. Configurar el Transporte

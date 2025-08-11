@@ -38,17 +38,17 @@ export {
 import {
   DataWebRTCManager,
   type DataWebRTCCallbacks
-} from './webrtc/webrtc-data.js';
+} from './webrtc_spec/webrtc-data.js';
 
 import {
   MediaWebRTCManager,
   type MediaWebRTCCallbacks
-} from './webrtc/webrtc-media.js';
+} from './webrtc_spec/webrtc-media.js';
 
 import {
   VoiceWebRTCManager,
   type VoiceWebRTCCallbacks
-} from './webrtc/webrtc-voice.js';
+} from './webrtc_spec/webrtc-voice.js';
 export {
   DataWebRTCManager,
   MediaWebRTCManager,

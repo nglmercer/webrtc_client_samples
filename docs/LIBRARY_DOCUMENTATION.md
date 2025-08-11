@@ -18,7 +18,7 @@ src/components/lib/
 │   ├── signaling-factory.ts    # Factory para crear canales
 │   ├── socketio-signaling.ts   # Implementación Socket.IO
 │   └── websocket-signaling.ts  # Implementación WebSocket
-├── webrtc/                 # Implementaciones específicas
+├── webrtc_spec/                 # Implementaciones específicas
 │   ├── webrtc-data.ts      # Chat/datos
 │   ├── webrtc-media.ts     # Video/audio
 │   └── webrtc-voice.ts     # Solo voz

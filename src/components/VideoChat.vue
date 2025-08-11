@@ -61,12 +61,12 @@
 import { ref, nextTick, watch , onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
-import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
-import { SignalingChannel } from './lib/index';
-import { MediaWebRTCManager, type MediaWebRTCCallbacks,createMediaManager } from './lib/index';
-import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
+import { mediaChatStore, setPeerState, removePeer } from '../lib/media-store';
+import { SignalingChannel } from '../lib/index';
+import { MediaWebRTCManager, type MediaWebRTCCallbacks,createMediaManager } from '../lib/index';
+import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/index';
 
-import apiConfig from './apiConfig';
+import apiConfig from '../lib/apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---
 const params = new URLSearchParams(window.location.search);
