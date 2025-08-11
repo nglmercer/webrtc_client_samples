@@ -1,5 +1,6 @@
 // types.ts - Tipos compartidos para signaling
-
+import { Socket as SocketIO } from 'socket.io-client';
+import { SocketIOLikeClient } from '../utils/ws-adapter.js';
 // Interfaces comunes para todos los tipos de signaling
 export interface UserParams {
     userId: string;
@@ -51,3 +52,4 @@ export interface SocketMessage {
     remoteUserId: string;
     message: ReceivedMessage;
 }
+export type Socket = SocketIO | SocketIOLikeClient | null;

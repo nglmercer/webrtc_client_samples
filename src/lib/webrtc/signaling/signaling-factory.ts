@@ -12,7 +12,8 @@ import type {
     SignalData,
     SignalingCallbacks,
     RoomParams,
-    SocketMessage
+    SocketMessage,
+    Socket
 } from './types.js';
 
 // Re-exportar tipos para compatibilidad
@@ -40,7 +41,7 @@ export interface ISignalingChannel {
     getConnectionState?(): string;
     sendMessage(remoteUserId: string, message: ReceivedMessage): void;
     // Propiedades compatibles con SignalingChannel original
-    socket?: any;
+    socket?: Socket;
     serverUrl?: string;
     userParams?: UserParams;
     callbacks?: SignalingCallbacks;

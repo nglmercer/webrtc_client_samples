@@ -40,9 +40,12 @@
         class="flex items-center justify-center w-16 h-16 rounded-full text-white font-bold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         :class="state.isMicEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
       >
-        <!-- Icono de Micrófono (SVG) -->
-        <svg v-if="state.isMicEnabled" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.586 15.586a7 7 0 01-9.172 0L3 12.172V10a7 7 0 0114 0v2.172l-2.414 2.414zM6 18v-2M18 18v-2" /></svg>
+        <!-- Icono de Micrófono (Material Symbols) -->
+        <MaterialIcon 
+          :icon="state.isMicEnabled ? 'mic' : 'mic_off'" 
+          customSize="32px" 
+          weight="font-medium"
+        />
       </button>
     </footer>
     
@@ -58,6 +61,7 @@ import { voiceChatStore, setVoicePeerState, removeVoicePeer } from '../lib/store
 import { SignalingChannel } from '../lib/webrtc/index';
 import { VoiceWebRTCManager, type VoiceWebRTCCallbacks,createVoiceManager,useWebSocket,useSocketIO,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/webrtc/index';
 import apiConfig from '../lib/apiConfig';
+import MaterialIcon from './MaterialIcon.vue';
 
 // --- Inicialización y Estado ---
 const params = new URLSearchParams(window.location.search);

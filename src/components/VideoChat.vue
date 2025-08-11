@@ -51,8 +51,28 @@
 
     <!-- Controles -->
     <footer class="p-4 border-t border-gray-700 flex justify-center items-center space-x-4">
-        <button @click="handleToggleMic" class="p-3 rounded-full" :class="state.isMicEnabled ? 'bg-blue-600' : 'bg-red-600'">MIC</button>
-        <button @click="handleToggleCam" class="p-3 rounded-full" :class="state.isCamEnabled ? 'bg-blue-600' : 'bg-red-600'">CAM</button>
+        <button 
+          @click="handleToggleMic" 
+          class="flex items-center justify-center w-14 h-14 rounded-full text-white font-bold transition-colors duration-200" 
+          :class="state.isMicEnabled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'"
+        >
+          <MaterialIcon 
+            :icon="state.isMicEnabled ? 'mic' : 'mic_off'" 
+            customSize="24px" 
+            weight="font-medium"
+          />
+        </button>
+        <button 
+          @click="handleToggleCam" 
+          class="flex items-center justify-center w-14 h-14 rounded-full text-white font-bold transition-colors duration-200" 
+          :class="state.isCamEnabled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'"
+        >
+          <MaterialIcon 
+            :icon="state.isCamEnabled ? 'videocam' : 'videocam_off'" 
+            customSize="24px" 
+            weight="font-medium"
+          />
+        </button>
     </footer>
   </div>
 </template>
@@ -65,7 +85,7 @@ import { mediaChatStore, setPeerState, removePeer } from '../lib/media-store';
 import { SignalingChannel } from '../lib/webrtc/index';
 import { MediaWebRTCManager, type MediaWebRTCCallbacks,createMediaManager } from '../lib/webrtc/index';
 import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/webrtc/index';
-
+import MaterialIcon from './MaterialIcon.vue';
 import apiConfig from '../lib/apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---

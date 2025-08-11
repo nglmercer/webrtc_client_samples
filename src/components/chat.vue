@@ -199,9 +199,19 @@ onMounted(() => {
     { userId: userId, roomId: roomId },
       signalingCallbacks
   );
-
+  
   console.log("[DEBUG] Llamando a signaling.connect()...");
   signaling.connect();
+  const { socket } = signaling;
+  if (!socket)return
+  socket?.on('connect', () => {
+    console.log("[DEBUG] Signaling: Conectado al servidor de señalización.");
+      socket?.emit('rooms',(rooms: string[]) => {
+      console.log("[DEBUG] Signaling: Rooms:", rooms);
+    })
+  });
+
+
 });
 
 onUnmounted(() => {

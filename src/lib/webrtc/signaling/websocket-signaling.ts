@@ -12,6 +12,7 @@ import type {
     RoomParams,
     SocketMessage
 } from './types.js';
+import type { ISignalingChannel } from './signaling-factory.js';
 
 // Re-exportar tipos para compatibilidad
 export type {
@@ -40,7 +41,7 @@ interface WebSocketSignalingOptions {
     pongTimeout?: number;
 }
 
-export class WebSocketSignalingChannel {
+export class WebSocketSignalingChannel implements ISignalingChannel {
     public socket: SocketIOLikeClient | null = null;
     public serverUrl: string;
     public userParams: UserParams;
