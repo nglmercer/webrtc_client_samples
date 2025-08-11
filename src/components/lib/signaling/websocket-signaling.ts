@@ -66,10 +66,10 @@ interface WebSocketSignalingOptions {
 }
 
 export class WebSocketSignalingChannel {
-    private socket: SocketIOLikeClient | null = null;
-    private serverUrl: string;
-    private userParams: UserParams;
-    private callbacks: Callbacks;
+    public socket: SocketIOLikeClient | null = null;
+    public serverUrl: string;
+    public userParams: UserParams;
+    public callbacks: Callbacks;
     private options: WebSocketSignalingOptions;
 
     constructor(serverUrl: string, userParams: UserParams, callbacks: Callbacks, options: WebSocketSignalingOptions = {}) {
@@ -169,7 +169,7 @@ export class WebSocketSignalingChannel {
         this.sendMessage(peerId, message);
     }
 
-    private sendMessage(remoteUserId: string, message: ReceivedMessage): void {
+    public sendMessage(remoteUserId: string, message: ReceivedMessage): void {
         if (!this.socket) {
             console.error("Socket no conectado.");
             return;

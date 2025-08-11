@@ -47,8 +47,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useStore } from '@nanostores/vue';
 import { chatStore, addMessage, setPeerState, removePeer } from './lib/store';
-import { SignalingChannel } from './lib/index';
-import { DataWebRTCManager,type DataWebRTCCallbacks } from './lib/index';
+import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
 import apiConfig from './apiConfig';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') as string;
@@ -64,7 +63,7 @@ const newMessage = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 
 let webrtc: DataWebRTCManager;
-let signaling: SignalingChannel;
+let signaling: ISignalingChannel;
 
 onMounted(() => {
   console.log(`%c[DEBUG] Componente montado. Iniciando chat para userId: ${userId} en roomId: ${roomId}`, 'color: cyan; font-weight: bold;');
@@ -114,11 +113,8 @@ onMounted(() => {
 
   const signalingUrl = apiConfig.getFullUrl();
   console.log(`[DEBUG] Creando SignalingChannel para conectar a: ${signalingUrl}`);
-  
-  signaling = new SignalingChannel(
-    signalingUrl,
-    { userId: userId, roomId: roomId },
-    {
+  useWebSocket(signalingUrl);
+  const signalingCallbacks: SignalingCallbacks = {
       onConnect: () => {
         console.log("%c[DEBUG] Signaling -> onConnect: ¡Conectado al servidor de señalización!", "color: green; font-weight: bold;");
         chatStore.setKey('isConnected', true);
@@ -198,7 +194,10 @@ onMounted(() => {
             chatStore.setKey('status', '¡Ahora eres el dueño de la sala!');
         }
       }
-    }
+    };
+  signaling = createSignalingChannel(
+    { userId: userId, roomId: roomId },
+      signalingCallbacks
   );
 
   console.log("[DEBUG] Llamando a signaling.connect()...");

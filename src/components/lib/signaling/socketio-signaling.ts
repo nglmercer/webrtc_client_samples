@@ -50,11 +50,11 @@ interface SocketMessage {
 }
 
 export class SignalingChannel {
-    // TS-NOTE: Tipamos las propiedades privadas para encapsular y proteger el estado interno.
-    private socket: Socket | null = null;
-    private serverUrl: string;
-    private userParams: UserParams;
-    private callbacks: Callbacks;
+    // TS-NOTE: Tipamos las propiedades para mantener compatibilidad con la interfaz
+    public socket: Socket | null = null;
+    public serverUrl: string;
+    public userParams: UserParams;
+    public callbacks: Callbacks;
 
     constructor(serverUrl: string, userParams: UserParams, callbacks: Callbacks) {
         this.serverUrl = serverUrl;
@@ -119,7 +119,7 @@ export class SignalingChannel {
         this.sendMessage(peerId, message);
     }
 
-    private sendMessage(remoteUserId: string, message: ReceivedMessage): void {
+    public sendMessage(remoteUserId: string, message: ReceivedMessage): void {
         if (!this.socket) {
             console.error("Socket no conectado.");
             return;

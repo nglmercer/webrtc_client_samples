@@ -56,7 +56,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 import { voiceChatStore, setVoicePeerState, removeVoicePeer } from './lib/store';
 import { SignalingChannel } from './lib/index';
-import { VoiceWebRTCManager, type VoiceWebRTCCallbacks } from './lib/index';
+import { VoiceWebRTCManager, type VoiceWebRTCCallbacks,createVoiceManager,useWebSocket,useSocketIO,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
 import apiConfig from './apiConfig';
 
 // --- Inicialización y Estado ---
@@ -69,7 +69,7 @@ const state = useStore(voiceChatStore);
 const remoteAudioContainer = ref<HTMLElement | null>(null);
 
 let webrtc: VoiceWebRTCManager;
-let signaling: SignalingChannel;
+let signaling: ISignalingChannel;
 
 // --- Lógica del Ciclo de Vida del Componente ---
 onMounted(async () => {
@@ -100,7 +100,7 @@ onMounted(async () => {
      voiceChatStore.setKey('status', 'Modo escucha. Conectando...');
   }
   
-  webrtc = new VoiceWebRTCManager({
+  webrtc = createVoiceManager({
     onSignalNeeded: (peerId, signal) => {
       signaling.sendSignal(peerId, signal);
     },
@@ -129,11 +129,11 @@ onMounted(async () => {
     webrtc.setLocalStream(state.value.localStream);
     webrtc.toggleMic(state.value.isMicEnabled);
   }
+  const signalingUrl = apiConfig.getFullUrl();
+  console.log(`[DEBUG] Creando SignalingChannel para conectar a: ${signalingUrl}`);
+  useWebSocket(signalingUrl);
 
-  signaling = new SignalingChannel(
-    apiConfig.getFullUrl(),
-    { userId, roomId },
-    {
+  const signalingCallbacks: SignalingCallbacks =     {
       onConnect: () => {
         voiceChatStore.setKey('isConnected', true);
         voiceChatStore.setKey('status', 'Conectado. Verificando sala...');
@@ -231,6 +231,10 @@ onMounted(async () => {
         if (amINowTheOwner) voiceChatStore.setKey('status', '¡Ahora eres el dueño de la sala!');
       }
     }
+
+  signaling = createSignalingChannel(
+    { userId, roomId },
+    signalingCallbacks
   );
 
   signaling.connect();

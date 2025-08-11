@@ -63,7 +63,9 @@ import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
 import { mediaChatStore, setPeerState, removePeer } from './lib/media-store';
 import { SignalingChannel } from './lib/index';
-import { MediaWebRTCManager, type MediaWebRTCCallbacks } from './lib/index';
+import { MediaWebRTCManager, type MediaWebRTCCallbacks,createMediaManager } from './lib/index';
+import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from './lib/index';
+
 import apiConfig from './apiConfig';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---
@@ -78,7 +80,7 @@ const localVideo = ref<HTMLVideoElement | null>(null);
 
 // Variables no reactivas para nuestras clases gestoras
 let webrtc: MediaWebRTCManager;
-let signaling: SignalingChannel;
+let signaling: ISignalingChannel;
 
 // --- 2. LÓGICA DEL CICLO DE VIDA ---
 onMounted(async () => {
@@ -144,7 +146,9 @@ async function initializeMedia() {
 }
 
 function initializeWebRTCManager() {
-  webrtc = new MediaWebRTCManager({
+  useWebSocket(apiConfig.getFullUrl());
+
+  webrtc = createMediaManager({
     // onSignalNeeded: Cuando WebRTC genera una señal, la enviamos por señalización.
     onSignalNeeded: (peerId, signal) => {
       console.log(`[WebRTC] Enviando señal a ${peerId}`);

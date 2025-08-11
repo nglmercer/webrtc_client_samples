@@ -57,6 +57,12 @@ export interface ISignalingChannel {
     disconnect(): void;
     isConnected?(): boolean;
     getConnectionState?(): string;
+    sendMessage(remoteUserId: string, message: ReceivedMessage): void;
+    // Propiedades compatibles con SignalingChannel original
+    socket?: any;
+    serverUrl?: string;
+    userParams?: UserParams;
+    callbacks?: SignalingCallbacks;
 }
 
 // Factory para crear el canal de señalización apropiado
