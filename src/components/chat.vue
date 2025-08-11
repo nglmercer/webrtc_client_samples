@@ -47,7 +47,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useStore } from '@nanostores/vue';
 import { chatStore, addMessage, setPeerState, removePeer } from '../lib/store';
-import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/index';
+import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/webrtc/index';
 import apiConfig from '../lib/apiConfig';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') as string;

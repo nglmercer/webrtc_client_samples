@@ -1,49 +1,24 @@
 // websocket-signaling.ts - Implementación de signaling usando WebSocket nativo
 
 import { SocketIOLikeClient } from '../utils/ws-adapter.js';
+import type {
+    UserParams,
+    WebRTCSignal,
+    ParticipationMessage,
+    SignalMessage,
+    ReceivedMessage,
+    SignalData,
+    SignalingCallbacks,
+    RoomParams,
+    SocketMessage
+} from './types.js';
 
-// Interfaces reutilizadas del signaling original
-interface UserParams {
-    userId: string;
-    roomId: string;
-}
-
-type WebRTCSignal = RTCSessionDescriptionInit | RTCIceCandidateInit;
-
-interface SignalMessage {
-    isWebRTCSignal: true;
-    sender: string;
-    signal: WebRTCSignal;
-}
-
-interface ParticipationMessage {
-    newParticipationRequest: true;
-    sender: string;
-}
-
-type ReceivedMessage = SignalMessage | ParticipationMessage | { [key: string]: any };
-
-interface Callbacks {
-    onConnect: () => void;
-    onDisconnect: () => void;
-    onMessage: (data: any) => void;
-    onUserDisconnected: (userId: string) => void;
-    onNewUserJoined?: (userData: ParticipationMessage) => void;
-    onRoomOwnerChanged: (newOwnerId: string) => void;
-}
-
-interface RoomParams {
-    sessionid: string;
-    extra: {
-        name: string;
-        [key: string]: any;
-    };
-}
-
-interface SocketMessage {
-    remoteUserId: string;
-    message: ReceivedMessage;
-}
+// Re-exportar tipos para compatibilidad
+export type {
+    ParticipationMessage,
+    SignalMessage,
+    SignalData
+} from './types.js';
 
 interface WebSocketSignalingOptions {
     query?: { [key: string]: string };
@@ -69,10 +44,10 @@ export class WebSocketSignalingChannel {
     public socket: SocketIOLikeClient | null = null;
     public serverUrl: string;
     public userParams: UserParams;
-    public callbacks: Callbacks;
+    public callbacks: SignalingCallbacks;
     private options: WebSocketSignalingOptions;
 
-    constructor(serverUrl: string, userParams: UserParams, callbacks: Callbacks, options: WebSocketSignalingOptions = {}) {
+    constructor(serverUrl: string, userParams: UserParams, callbacks: SignalingCallbacks, options: WebSocketSignalingOptions = {}) {
         this.serverUrl = serverUrl;
         this.userParams = userParams;
         this.callbacks = callbacks;

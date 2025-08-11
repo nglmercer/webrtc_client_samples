@@ -1,62 +1,35 @@
 // signaling.ts
 import { io, Socket } from 'socket.io-client';
+import type {
+    UserParams,
+    WebRTCSignal,
+    ParticipationMessage,
+    SignalMessage,
+    ReceivedMessage,
+    SignalData,
+    SignalingCallbacks,
+    RoomParams,
+    SocketMessage
+} from './types.js';
 
 // TS-NOTE: Todas las interfaces que definían la estructura de datos ahora son tipos de TypeScript.
 // Esto previene errores al construir o recibir mensajes.
 
-interface UserParams {
-    userId: string;
-    roomId: string;
-}
-
-// TS-NOTE: Definimos los tipos de señal WebRTC para reutilizarlos.
-type WebRTCSignal = RTCSessionDescriptionInit | RTCIceCandidateInit;
-
-// TS-NOTE: Interfaces para los diferentes tipos de mensajes que se pueden enviar.
-interface SignalMessage {
-    isWebRTCSignal: true; // Usamos un literal para que TS pueda diferenciar los tipos de mensaje.
-    sender: string;
-    signal: WebRTCSignal;
-}
-
-interface ParticipationMessage {
-    newParticipationRequest: true;
-    sender: string;
-}
-
-// TS-NOTE: Un tipo de unión para todos los posibles mensajes que se pueden recibir.
-type ReceivedMessage = SignalMessage | ParticipationMessage | { [key: string]: any };
-
-interface Callbacks {
-    onConnect: () => void;
-    onDisconnect: () => void;
-    onMessage: (data: any) => void;
-    onUserDisconnected: (userId: string) => void;
-    onNewUserJoined?: (userData: ParticipationMessage) => void;
-    onRoomOwnerChanged: (newOwnerId: string) => void;
-}
-
-interface RoomParams {
-    sessionid: string;
-    extra: {
-        name: string;
-        [key: string]: any; // Permite propiedades adicionales.
-    };
-}
-
-interface SocketMessage {
-    remoteUserId: string;
-    message: ReceivedMessage;
-}
+// Re-exportar tipos para compatibilidad
+export type {
+    ParticipationMessage,
+    SignalMessage,
+    SignalData
+} from './types.js';
 
 export class SignalingChannel {
     // TS-NOTE: Tipamos las propiedades para mantener compatibilidad con la interfaz
     public socket: Socket | null = null;
     public serverUrl: string;
     public userParams: UserParams;
-    public callbacks: Callbacks;
+    public callbacks: SignalingCallbacks;
 
-    constructor(serverUrl: string, userParams: UserParams, callbacks: Callbacks) {
+    constructor(serverUrl: string, userParams: UserParams, callbacks: SignalingCallbacks) {
         this.serverUrl = serverUrl;
         this.userParams = userParams;
         this.callbacks = callbacks;

@@ -3,49 +3,30 @@
 import { getWebRTCConfig } from '../core/config.js';
 import { SignalingChannel } from './socketio-signaling.js';
 import { WebSocketSignalingChannel } from './websocket-signaling.js';
+import type {
+    UserParams,
+    WebRTCSignal,
+    ParticipationMessage,
+    SignalMessage,
+    ReceivedMessage,
+    SignalData,
+    SignalingCallbacks,
+    RoomParams,
+    SocketMessage
+} from './types.js';
 
-// Interfaces comunes
-export interface UserParams {
-    userId: string;
-    roomId: string;
-}
-
-export type WebRTCSignal = RTCSessionDescriptionInit | RTCIceCandidateInit;
-
-export interface SignalMessage {
-    isWebRTCSignal: true;
-    sender: string;
-    signal: WebRTCSignal;
-}
-
-export interface ParticipationMessage {
-    newParticipationRequest: true;
-    sender: string;
-}
-
-export type ReceivedMessage = SignalMessage | ParticipationMessage | { [key: string]: any };
-
-export interface SignalingCallbacks {
-    onConnect: () => void;
-    onDisconnect: () => void;
-    onMessage: (data: any) => void;
-    onUserDisconnected: (userId: string) => void;
-    onNewUserJoined?: (userData: ParticipationMessage) => void;
-    onRoomOwnerChanged: (newOwnerId: string) => void;
-}
-
-export interface RoomParams {
-    sessionid: string;
-    extra: {
-        name: string;
-        [key: string]: any;
-    };
-}
-
-export interface SocketMessage {
-    remoteUserId: string;
-    message: ReceivedMessage;
-}
+// Re-exportar tipos para compatibilidad
+export type {
+    UserParams,
+    WebRTCSignal,
+    ParticipationMessage,
+    SignalMessage,
+    ReceivedMessage,
+    SignalData,
+    SignalingCallbacks,
+    RoomParams,
+    SocketMessage
+} from './types.js';
 
 // Interfaz común para ambos tipos de signaling
 export interface ISignalingChannel {
@@ -109,7 +90,7 @@ export class SignalingChannelFactory {
      * @param callbacks Callbacks para eventos
      * @returns Instancia del canal Socket.IO
      */
-    static createSocketIO(
+    static createSocketIO( 
         serverUrl: string,
         userParams: UserParams, 
         callbacks: SignalingCallbacks
