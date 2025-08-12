@@ -1,1 +1,51 @@
 @import "tailwindcss";
+.room-list {
+  @apply w-full;
+}
+
+.room-list-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.refresh-btn {
+  @apply flex items-center;
+}
+
+.rooms-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.room-card {
+  @apply transform hover:scale-105 hover:shadow-lg;
+}
+
+@media (max-width: 640px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .room-list-header {
+    @apply flex-col space-y-3 items-stretch;
+  }
+}
+.connection-status {
+  @apply w-full;
+}
+
+.status-indicator {
+  @apply shadow-sm;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

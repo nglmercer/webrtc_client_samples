@@ -7,6 +7,8 @@ export interface Props {
 const { title = "Bienvenido al Lobby" } = Astro.props;
 
 import MaterialIcon from './MaterialIcon.vue';
+import RoomList from './RoomList.vue';
+import ConnectionStatus from './ConnectionStatus.vue';
 
 // Configuración de tipos de chat
 const chatTypes = [
@@ -36,15 +38,19 @@ const chatTypes = [
         <!-- Header -->
         <header class="bg-white/10 backdrop-blur-md border-b border-white/20">
             <div class="container mx-auto px-6 py-4">
-                <h1 class="text-3xl font-bold text-white text-center">
-                    {title}
-                </h1>
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-white">
+                        {title}
+                    </h1>
+                    <ConnectionStatus client:load />
+                </div>
             </div>
         </header>
 
         <!-- Content -->
-        <main class="flex-1 flex items-center justify-center p-6">
-            <div class="w-full max-w-md">
+        <main class="flex-1 flex items-start justify-center p-6">
+            <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Formulario de creación/unión -->
                 <div class="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-8 shadow-2xl">
                     <!-- Form Group - Usuario -->
                     <div class="mb-6">
@@ -100,12 +106,45 @@ const chatTypes = [
                         </div>
                     </div>
                 </div>
+                
+                <!-- Lista de salas disponibles -->
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-8 shadow-2xl">
+                    <RoomList client:load userId="user" />
+                </div>
             </div>
         </main>
     </div>
 </div>
 
 <script>
+    // Importar el socket centralizado para inicializar la conexión
+    import "../lib/socket";
+    
+    // Función para navegar a una sala de chat
+    function navigateToChat(chatType: string, userId: string, roomId: string) {
+        const params = new URLSearchParams({
+            userId: userId,
+            roomId: roomId
+        });
+        window.location.href = `/chat-${chatType}?${params.toString()}`;
+    }
+    
+    // Función para unirse a una sala existente
+    function joinExistingRoom(roomName: string) {
+        const userId = (document.getElementById('userId') as HTMLInputElement)?.value.trim();
+        
+        if (!userId) {
+            alert('Por favor, introduce tu nombre de usuario.');
+            return;
+        }
+        
+        // Por defecto, usar chat de video para salas existentes
+        navigateToChat('video', userId, roomName);
+    }
+    
+    // Hacer la función disponible globalmente para el componente Vue
+    (window as any).joinExistingRoom = joinExistingRoom;
+
     // Event listener para los botones de chat
     document.addEventListener('DOMContentLoaded', () => {
         const chatButtons = document.querySelectorAll('.chat-button');
@@ -123,15 +162,13 @@ const chatTypes = [
                     return;
                 }
                 
-                // Construye los query params
-                const params = new URLSearchParams({
-                    userId: userId,
-                    roomId: roomId
-                });
-                
-                // Redirige a la página correspondiente
-                window.location.href = `/chat-${chatType}?${params.toString()}`;
+                navigateToChat(chatType!, userId, roomId);
             });
+        });
+        
+        // Escuchar eventos del componente RoomList
+        document.addEventListener('roomSelected', (event: any) => {
+            joinExistingRoom(event.detail.roomName);
         });
     });
 </script>
