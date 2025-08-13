@@ -7,46 +7,88 @@
       <p class="text-sm text-gray-400">Tu ID: {{ state.myId }} | Estado: {{ state.status }}</p>
     </header>
 
-    <!-- Área de Videos (Cuadrícula) -->
-    <main class="flex-grow p-4 my-4 bg-gray-800/50 rounded-lg grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto">
-      
-      <!-- Tu Video Local -->
-      <div v-if="state.localStream" class="relative bg-black rounded-lg overflow-hidden shadow-lg">
-        <video ref="localVideo" class="w-full h-full object-cover" autoplay playsinline muted></video>
-        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-1 text-sm rounded-tr-lg">
-          {{ state.myId }} (Tú)
-        </div>
-      </div>
-      
-      <!-- Videos de los Pares Remotos -->
-      <div v-for="(peer, peerId) in state.peers" :key="peerId" 
-           class="relative bg-black rounded-lg overflow-hidden shadow-lg">
+    <!-- Área de Videos usando UnifiedVideoGrid -->
+    <main class="flex-grow p-4 my-4 bg-gray-800/50 rounded-lg overflow-y-auto">
+      <UnifiedVideoGrid 
+        :videos="videoList" 
+        :config="gridConfig"
+        ref="videoGrid"
+      >
+        <template #video="{ video, index, config, isActive, isFocused, isMain }">
+          <div class="relative bg-black rounded-lg overflow-hidden shadow-lg h-full">
+            <!-- Video Local -->
+            <video 
+              v-if="video.id === state.myId && state.localStream"
+              ref="localVideo" 
+              class="w-full h-full object-cover" 
+              autoplay 
+              playsinline 
+              muted
+              :srcObject="state.localStream"
+            ></video>
+            
+            <!-- Videos Remotos -->
+            <video 
+              v-else-if="video.id !== state.myId && state.peers[video.id]?.stream"
+              :ref="el => setVideoRef(el as HTMLVideoElement, state.peers[video.id].stream!)"
+              class="w-full h-full object-cover" 
+              autoplay 
+              playsinline
+            ></video>
+            
+            <!-- Estado de conexión -->
+            <div 
+              v-else-if="video.id !== state.myId && !state.peers[video.id]?.stream" 
+              class="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-800"
+            >
+              <div class="text-center">
+                <div class="animate-pulse mb-2">🔄</div>
+                <p>Conectando con {{ video.id }}...</p>
+                <p class="text-xs">({{ state.peers[video.id]?.status || 'Iniciando...' }})</p>
+              </div>
+            </div>
+            
+            <!-- Placeholder para video local sin stream -->
+            <div 
+              v-else-if="video.id === state.myId && !state.localStream" 
+              class="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-800"
+            >
+              <div class="text-center">
+                <div class="mb-2">📹</div>
+                <p>Cámara desactivada</p>
+              </div>
+            </div>
 
-           <!-- Renderizamos el video SÓLO si el stream ha llegado -->
-           <video v-if="peer.stream"
-                  :ref="el => setVideoRef(el as HTMLVideoElement, peer.stream!)"
-                  class="w-full h-full object-cover" 
-                  autoplay 
-                  playsinline>
-            </video>
-
-           <!-- Mensaje de estado de conexión para este par -->
-           <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400">
-             Conectando con {{ peerId }}... ({{ peer.status }})
-           </div>
-
-           <!-- Etiqueta con el ID del par -->
-           <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-1 text-sm rounded-tr-lg">
-             {{ peerId }}
-           </div>
-      </div>
+            <!-- Etiqueta con información del usuario -->
+            <div class="absolute bottom-0 left-0 bg-black/70 px-3 py-2 text-sm rounded-tr-lg backdrop-blur-sm">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium">
+                  {{ video.id === state.myId ? `${video.id} (Tú)` : video.id }}
+                </span>
+                <!-- Indicadores de estado -->
+                <div class="flex space-x-1">
+                  <span v-if="video.id === state.myId && !state.isMicEnabled" class="text-red-400">🔇</span>
+                  <span v-if="video.id === state.myId && !state.isCamEnabled" class="text-red-400">📹</span>
+                  <span v-if="isMain" class="text-blue-400">👑</span>
+                  <span v-if="isFocused" class="text-yellow-400">⭐</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Indicador de actividad de audio (opcional) -->
+            <div 
+              v-if="video.id === state.myId && state.isMicEnabled" 
+              class="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full animate-pulse"
+            ></div>
+          </div>
+        </template>
+      </UnifiedVideoGrid>
       
       <!-- Mensaje cuando estás solo -->
-      <div v-if="Object.keys(state.peers).length === 0 && state.isConnected" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-gray-500">
+      <div v-if="videoList.length <= 1 && state.isConnected" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-gray-500">
           <p>Estás solo en la sala.</p>
           <p class="text-xs">Comparte el enlace para que otros se unan.</p>
       </div>
-
     </main>
 
     <!-- Controles -->
@@ -78,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch , onMounted, onUnmounted } from 'vue';
+import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useStore } from '@nanostores/vue';
 // ASUMO QUE ESTAS LIBRERÍAS ESTÁN EN `src/lib` O SIMILAR
 import { mediaChatStore, setPeerState, removePeer } from '../lib/media-store';
@@ -86,7 +128,9 @@ import { SignalingChannel } from '../lib/webrtc/index';
 import { MediaWebRTCManager, type MediaWebRTCCallbacks,createMediaManager } from '../lib/webrtc/index';
 import { DataWebRTCManager,type DataWebRTCCallbacks,useSocketIO,useWebSocket,createSignalingChannel,type SignalingCallbacks,type ISignalingChannel } from '../lib/webrtc/index';
 import MaterialIcon from './MaterialIcon.vue';
+import UnifiedVideoGrid from './UnifiedVideoGrid.vue';
 import apiConfig from '../lib/apiConfig';
+import { flexboxConfig } from '../lib/gridConfigs';
 
 // --- 1. INICIALIZACIÓN Y ESTADO ---
 const params = new URLSearchParams(window.location.search);
@@ -97,10 +141,28 @@ const isListener = params.get('mode') === 'listen';
 // Usamos el store de Nano Stores para el estado reactivo
 const state = useStore(mediaChatStore);
 const localVideo = ref<HTMLVideoElement | null>(null);
+const videoGrid = ref<InstanceType<typeof UnifiedVideoGrid> | null>(null);
 
 // Variables no reactivas para nuestras clases gestoras
 let webrtc: MediaWebRTCManager;
 let signaling: ISignalingChannel;
+
+// Configuración del grid
+const gridConfig = flexboxConfig;
+
+// Lista de videos para el grid
+const videoList = computed(() => {
+  const videos = [state.value.myId]; // Siempre incluir el video local
+  
+  // Agregar videos de pares remotos
+  Object.keys(state.value.peers).forEach(peerId => {
+    if (!videos.includes(peerId)) {
+      videos.push(peerId);
+    }
+  });
+  
+  return videos;
+});
 
 // --- 2. LÓGICA DEL CICLO DE VIDA ---
 onMounted(async () => {

@@ -120,7 +120,7 @@ export class SocketIOLikeClient {
       }
 
       // Construir URL con query parameters
-      let wsUrl = this.url.replace(/^http/, 'ws');
+      let wsUrl = this.url.replace(/^https?/, (match) => match === 'https' ? 'wss' : 'ws');
       const queryParams = new URLSearchParams();
 
       // Agregar query parameters existentes

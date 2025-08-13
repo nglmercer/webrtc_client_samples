@@ -32,6 +32,9 @@ const apiConfig: ApiConfig = {
   port: import.meta.env.VITE_API_PORT || 9001,
   protocol: 'http',
   getFullUrl(): string {
+/*     if (typeof window !== "undefined" ){
+      return `${window.location.origin}`
+    } */
     return `${this.protocol}://${this.host}:${this.port}`;
   },
   update(newConfig) {
