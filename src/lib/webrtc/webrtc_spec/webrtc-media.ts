@@ -17,8 +17,17 @@ export class MediaWebRTCManager extends BaseWebRTCManager {
   }
 
   // Configurar stream local
-  public setLocalStream(stream: MediaStream): void {
+  public async setLocalStream(stream: MediaStream): Promise<void> {
     this.localStream = stream;
+    if (this.peers.size === 0) return;
+    const renegotiations = Array.from(this.peers.entries()).map(async ([peerId, peer]) => {
+      stream.getTracks().forEach(track => {
+        peer.connection.addTrack(track, stream);
+        console.log(`[MediaWebRTC] Añadiendo track local (${track.kind}) a la conexión existente con ${peerId}`);
+      });
+      await this.createOffer(peerId);
+    });
+    await Promise.all(renegotiations);
   }
 
   // Implementación específica para conexiones de media
@@ -156,5 +165,20 @@ export class MediaWebRTCManager extends BaseWebRTCManager {
     await pc.setLocalDescription(offer);
     
     this.callbacks.onSignalNeeded(peerId, offer);
+  }
+
+  public async addMediaTrack(track: MediaStreamTrack): Promise<void> {
+    if (!this.localStream) {
+      this.localStream = new MediaStream([track]);
+    } else {
+      this.localStream.addTrack(track);
+    }
+    if (this.peers.size === 0) return;
+    const renegotiations = Array.from(this.peers.entries()).map(async ([peerId, peer]) => {
+      peer.connection.addTrack(track, this.localStream!);
+      console.log(`[MediaWebRTC] Añadido track (${track.kind}) a la conexión con ${peerId}`);
+      await this.createOffer(peerId);
+    });
+    await Promise.all(renegotiations);
   }
 }

@@ -136,7 +136,7 @@ import { flexboxConfig } from '../lib/gridConfigs';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') || `user_${Math.random().toString(36).substring(2, 5)}`;
 const roomId = params.get('roomId') || 'default-room';
-const isListener = params.get('mode') === 'listen';
+// Eliminamos isListener para que todos comiencen como listeners por defecto
 
 // Usamos el store de Nano Stores para el estado reactivo
 const state = useStore(mediaChatStore);
@@ -171,16 +171,15 @@ onMounted(async () => {
     myId: userId,
     roomId: roomId,
     status: 'Inicializando...',
-    isMicEnabled: !isListener,
-    isCamEnabled: !isListener,
+    isMicEnabled: false, // Por defecto desactivado
+    isCamEnabled: false, // Por defecto desactivado
     isConnected: false,
     isInitiator: false,
     localStream: null,
     peers: {},
   });
 
-  // Paso 1: Obtener media local (cámara y micrófono)
-  await initializeMedia(); // 1
+  // No inicializamos media aquí, se hará al activar toggles
   initializeWebRTCManager(); // 2
   initializeSignalingChannel(); // 3
   signaling.connect(); // 4
@@ -211,10 +210,6 @@ onUnmounted(() => {
 // --- 3. FUNCIONES DE INICIALIZACIÓN ---
 
 async function initializeMedia() {
-  if (isListener) {
-    console.log("Modo oyente, no se solicitará media.");
-    return;
-  }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     mediaChatStore.setKey('localStream', stream);
@@ -336,16 +331,59 @@ function initializeSignalingChannel() {
 
 // --- 4. MANEJADORES DE UI ---
 
-function handleToggleMic() {
-  const newState = !state.value.isMicEnabled;
-  mediaChatStore.setKey('isMicEnabled', newState);
-  webrtc.toggleMic(newState);
+async function getLocalMedia(constraints: MediaStreamConstraints) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    return stream;
+  } catch (error) {
+    console.error("Error al obtener media:", error);
+    mediaChatStore.setKey('status', 'Error de media. Revisa permisos o dispositivos.');
+    return null;
+  }
 }
 
-function handleToggleCam() {
+async function handleToggleMic() {
+  const newState = !state.value.isMicEnabled;
+  mediaChatStore.setKey('isMicEnabled', newState);
+  if (newState) {
+    const audioStream = await getLocalMedia({ audio: true });
+    if (audioStream) {
+      const audioTrack = audioStream.getAudioTracks()[0];
+      if (!state.value.localStream) {
+        mediaChatStore.setKey('localStream', new MediaStream([audioTrack]));
+      } else {
+        state.value.localStream.addTrack(audioTrack);
+      }
+      await webrtc.addMediaTrack(audioTrack);
+      webrtc.toggleMic(true);
+    } else {
+      mediaChatStore.setKey('isMicEnabled', false);
+    }
+  } else {
+    webrtc.toggleMic(false);
+  }
+}
+
+async function handleToggleCam() {
   const newState = !state.value.isCamEnabled;
   mediaChatStore.setKey('isCamEnabled', newState);
-  webrtc.toggleCam(newState);
+  if (newState) {
+    const videoStream = await getLocalMedia({ video: true });
+    if (videoStream) {
+      const videoTrack = videoStream.getVideoTracks()[0];
+      if (!state.value.localStream) {
+        mediaChatStore.setKey('localStream', new MediaStream([videoTrack]));
+      } else {
+        state.value.localStream.addTrack(videoTrack);
+      }
+      await webrtc.addMediaTrack(videoTrack);
+      webrtc.toggleCam(true);
+    } else {
+      mediaChatStore.setKey('isCamEnabled', false);
+    }
+  } else {
+    webrtc.toggleCam(false);
+  }
 }
 
 // Helper para asignar dinámicamente el stream a los elementos <video>
