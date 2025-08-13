@@ -36,8 +36,7 @@
     <footer class="p-4 border-t border-gray-700 flex justify-center items-center">
       <button 
         @click="toggleMicrophone"
-        :disabled="!state.localStream"
-        class="flex items-center justify-center w-16 h-16 rounded-full text-white font-bold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="flex items-center justify-center w-16 h-16 rounded-full text-white font-bold transition-colors duration-200"
         :class="state.isMicEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
       >
         <!-- Icono de Micrófono (Material Symbols) -->
@@ -67,7 +66,8 @@ import MaterialIcon from './MaterialIcon.vue';
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('userId') || `user_${Math.random().toString(36).substr(2, 5)}`;
 const roomId = params.get('roomId') || 'default-room';
-const isListener = params.get('mode') === 'listen';
+// Todos los usuarios inician como listeners por defecto
+const isListener = params.get('mode') !== 'speak'; // Solo si explícitamente se pone mode=speak, no será listener
 
 const state = useStore(voiceChatStore);
 const remoteAudioContainer = ref<HTMLElement | null>(null);
@@ -85,15 +85,17 @@ onMounted(async () => {
     status: 'Inicializando...',
     isConnected: false,
     isInitiator: false,
-    isMicEnabled: !isListener,
+    isMicEnabled: false, // Todos inician con micrófono desactivado
     localStream: null,
     peers: {},
   });
 
+  // Solo solicitar micrófono si explícitamente se especifica mode=speak
   if (!isListener) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       voiceChatStore.setKey('localStream', stream);
+      voiceChatStore.setKey('isMicEnabled', true);
       voiceChatStore.setKey('status', 'Micrófono listo. Conectando...');
     } catch (err) {
       console.error("Error al obtener micrófono:", err);
@@ -101,7 +103,7 @@ onMounted(async () => {
       return;
     }
   } else {
-     voiceChatStore.setKey('status', 'Modo escucha. Conectando...');
+     voiceChatStore.setKey('status', 'Modo escucha. Haz clic en el micrófono para hablar.');
   }
   
   webrtc = createVoiceManager({
@@ -130,8 +132,14 @@ onMounted(async () => {
   });
 
   if (state.value.localStream) {
-    webrtc.setLocalStream(state.value.localStream);
-    webrtc.toggleMic(state.value.isMicEnabled);
+    try {
+      await webrtc.setLocalStream(state.value.localStream);
+      webrtc.toggleMic(state.value.isMicEnabled);
+      console.log('[VoiceChat] Stream local configurado correctamente');
+    } catch (error) {
+      console.error('[VoiceChat] Error al configurar stream local:', error);
+      voiceChatStore.setKey('status', 'Error al configurar el audio local.');
+    }
   }
   const signalingUrl = apiConfig.getFullUrl();
   console.log(`[DEBUG] Creando SignalingChannel para conectar a: ${signalingUrl}`);
@@ -236,12 +244,53 @@ onUnmounted(() => {
     signaling?.disconnect();
 });
 
-// --- Funciones de Ayuda (sin cambios) ---
-function toggleMicrophone() {
-  if (isListener) return; // Un listener no puede controlar el micro
+// --- Funciones de Ayuda ---
+async function toggleMicrophone() {
   const newMicState = !state.value.isMicEnabled;
-  voiceChatStore.setKey('isMicEnabled', newMicState);
-  webrtc.toggleMic(newMicState);
+  
+  // Si estamos activando el micrófono y no tenemos stream local (modo listener)
+  if (newMicState && !state.value.localStream) {
+    voiceChatStore.setKey('status', 'Solicitando acceso al micrófono...');
+    
+    try {
+      console.log('[VoiceChat] Habilitando micrófono dinámicamente. Peers conectados:', Object.keys(state.value.peers).length);
+      
+      // Obtener stream de micrófono
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: { echoCancellation: true, noiseSuppression: true } 
+      });
+      
+      // Configurar el stream en el store
+      voiceChatStore.setKey('localStream', stream);
+      
+      // Configurar el stream en el manager (esto manejará la renegociación automáticamente)
+      await webrtc.setLocalStream(stream);
+      
+      // Habilitar el micrófono
+      webrtc.toggleMic(true);
+      voiceChatStore.setKey('isMicEnabled', true);
+      voiceChatStore.setKey('status', 'Micrófono activado. Ahora puedes hablar.');
+      
+      console.log('[VoiceChat] Micrófono habilitado dinámicamente y configurado correctamente');
+      
+    } catch (error) {
+      console.error('[VoiceChat] Error al habilitar micrófono:', error);
+      voiceChatStore.setKey('status', 'Error: No se pudo acceder al micrófono.');
+      return;
+    }
+  } 
+  // Si estamos desactivando el micrófono y tenemos stream local
+  else if (!newMicState && state.value.localStream) {
+    voiceChatStore.setKey('isMicEnabled', false);
+    webrtc.toggleMic(false);
+    voiceChatStore.setKey('status', 'Micrófono desactivado.');
+  }
+  // Si solo estamos cambiando el estado del micrófono existente
+  else if (state.value.localStream) {
+    voiceChatStore.setKey('isMicEnabled', newMicState);
+    webrtc.toggleMic(newMicState);
+    voiceChatStore.setKey('status', newMicState ? 'Micrófono activado.' : 'Micrófono desactivado.');
+  }
 }
 
 function handleRemoteStream(peerId: string, stream: MediaStream) {
