@@ -70,7 +70,12 @@ export class ClientLogger {
         return console.log;
     }
   }
-
+  log(...args: any[]): void {
+    if (this.shouldLog(LogLevel.INFO)) {
+      const formatted = this.formatMessage('INFO', 'log', "",...args);
+      this.getConsoleMethod(LogLevel.INFO)(formatted);
+    }
+  }
   debug(event: string, message: string, data?: any): void {
     if (this.shouldLog(LogLevel.DEBUG)) {
       const formatted = this.formatMessage('DEBUG', event, message, data);
