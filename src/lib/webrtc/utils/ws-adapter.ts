@@ -34,6 +34,7 @@ interface SocketIOLikeOptions {
   pingInterval?: number;
   pongTimeout?: number;
 }
+
 // Clase que emula Socket de Socket.IO usando WebSocket nativo
 export class SocketIOLikeClient {
   private ws: WebSocket | null = null;
@@ -66,7 +67,7 @@ export class SocketIOLikeClient {
   private manualDisconnect: boolean = false;
   private logger: ClientLogger;
 
-  constructor(url: string, options: SocketIOLikeOptions = {},log=false) {
+  constructor(url: string, options: SocketIOLikeOptions = {},log=true) {
     this.url = url;
     this.options = {
       reconnection: true,
@@ -86,8 +87,6 @@ export class SocketIOLikeClient {
     // Initialize browser-compatible logger
     this.logger = createClientLogger({
       prefix: `ws-client-${this.socketId}`,
-      enableConsole: log,
-      enableColors: true,
       level: log ? 0 : 1 // DEBUG if debug option is true, otherwise INFO
     });
 
@@ -197,7 +196,7 @@ export class SocketIOLikeClient {
     this.ws.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
-        this.logger.log('[WS-ADAPTER] Mensaje recibido:', data);
+        console.log('[WS-ADAPTER] Mensaje recibido:', data);
       if (data.event === 'ping'){
           this.emit('pong',...(data.payload || []));
         }
@@ -207,7 +206,7 @@ export class SocketIOLikeClient {
           data.callbackId &&
           this.pendingCallbacks.has(data.callbackId)
         ) {
-          this.logger.log(
+          console.log(
             '[WS-ADAPTER] Procesando callback response:',
             data.callbackId,
             data.payload
@@ -249,7 +248,7 @@ export class SocketIOLikeClient {
 
         // Emitir evento normal
         if (data.event && data.event !== 'callback-response') {
-          this.logger.log(
+          console.log(
             '[WS-ADAPTER] Emitiendo evento:',
             data.event,
             data.payload
@@ -279,7 +278,7 @@ export class SocketIOLikeClient {
       let reason = event.reason || this.getDisconnectReason(event.code);
       const wasClean = event.wasClean;
       
-      this.logger.log(`[WS-ADAPTER] Connection closed: ${reason} (code: ${event.code}, clean: ${wasClean})`);
+      console.log(`[WS-ADAPTER] Connection closed: ${reason} (code: ${event.code}, clean: ${wasClean})`);
       
       // Create disconnect details object
       const disconnectDetails = {
@@ -486,7 +485,7 @@ export class SocketIOLikeClient {
           const callbackId = `cb_${++this.callbackCounter}`;
           const timeout = this.currentTimeout || this.options.timeout || 20000;
           
-          this.logger.log(
+          console.log(
             '[WS-ADAPTER] Enviando mensaje con callback:',
             event,
             callbackId,
@@ -514,7 +513,7 @@ export class SocketIOLikeClient {
           // Reset timeout después de usar
           this.currentTimeout = null;
         } else {
-          this.logger.log(
+          console.log(
             '[WS-ADAPTER] Enviando mensaje sin callback:',
             event,
             args
@@ -630,7 +629,7 @@ export class SocketIOLikeClient {
     this.isReconnecting = true;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts++;
-      this.logger.log(
+      console.log(
         `[WS-ADAPTER] Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} (delay: ${Math.round(delay)}ms)`
       );
       this.connect();
@@ -734,7 +733,7 @@ export class SocketIOLikeClient {
 
     // Log cleanup statistics if any callbacks were cleaned
     if (cleanedCallbacks.length > 0) {
-      this.logger.log(`[WS-ADAPTER] Cleaned up ${cleanedCallbacks.length} stale callbacks:`, cleanedCallbacks);
+      console.log(`[WS-ADAPTER] Cleaned up ${cleanedCallbacks.length} stale callbacks:`, cleanedCallbacks);
     }
   }
 
@@ -778,7 +777,7 @@ export class SocketIOLikeClient {
       this.emit('error', cleanupError);
     }
     
-    this.logger.log(`[WS-ADAPTER] Cleaned up ${callbacksToCleanup.length} pending callbacks (reason: ${reason})`);
+    console.log(`[WS-ADAPTER] Cleaned up ${callbacksToCleanup.length} pending callbacks (reason: ${reason})`);
   }
 
   public getCallbackStats(): { 
@@ -905,7 +904,7 @@ export class SocketIOLikeClient {
       this.pendingCallbacks.delete(callbackId);
     });
     
-    this.logger.log(`[WS-ADAPTER] Manually cleared ${clearedCount} callbacks${eventFilter ? ` for event '${eventFilter}'` : ''}`);
+    console.log(`[WS-ADAPTER] Manually cleared ${clearedCount} callbacks${eventFilter ? ` for event '${eventFilter}'` : ''}`);
     return clearedCount;
   }
 
@@ -984,7 +983,7 @@ export class SocketIOLikeClient {
     });
     
     if (callbacksToRemove.length > 0) {
-      this.logger.log(`[WS-ADAPTER] Removed ${callbacksToRemove.length} callbacks due to limits (maxPending: ${maxPending}, maxAge: ${maxAge}ms)`);
+      console.log(`[WS-ADAPTER] Removed ${callbacksToRemove.length} callbacks due to limits (maxPending: ${maxPending}, maxAge: ${maxAge}ms)`);
     }
   }
 }
