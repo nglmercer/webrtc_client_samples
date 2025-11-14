@@ -104,14 +104,15 @@ export class DataWebRTCManager extends BaseWebRTCManager {
   public async handleAnswer(peerId: string, answer: RTCSessionDescriptionInit): Promise<void> {
     const state = this.getSignalingState(peerId);
     
-    // Solo aceptar respuestas si estamos esperando una
-    if (state !== 'have-local-offer') {
-      console.log(`[DataWebRTC] Ignorando answer de ${peerId} - estado: ${state}`);
+    // Verificar si la conexión está cerrada primero
+    if (state === 'closed') {
+      console.log(`[DataWebRTC] Ignorando answer para ${peerId} - conexión cerrada`);
       return;
     }
 
-    if (state === 'closed') {
-      console.log(`[DataWebRTC] Ignorando answer para ${peerId} - conexión cerrada`);
+    // Solo aceptar respuestas si estamos esperando una
+    if (state !== 'have-local-offer') {
+      console.log(`[DataWebRTC] Ignorando answer de ${peerId} - estado: ${state}`);
       return;
     }
 

@@ -152,7 +152,7 @@ export class ScreenWebRTCManager extends BaseWebRTCManager {
     if (this.screenStream) {
       this.screenStream.getTracks().forEach(track => {
         console.log(`[ScreenWebRTC] Añadiendo track de pantalla (${track.kind}) a la conexión con ${peerId}`);
-        pc.addTrack(track, this.screenStream);
+        pc.addTrack(track, this.screenStream!);
       });
     }
 
