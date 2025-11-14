@@ -74,8 +74,32 @@ export const DEFAULT_CONFIG: WebRTCLibConfig = {
   webrtc: {
     iceServers: {
       iceServers: [
-        { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
-      ]
+        // ✅ MÁS SERVIDORES STUN GOOGLE
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        
+        // ✅ SERVIDORES STUN ALTERNATIVOS
+        { urls: 'stun:stun.services.mozilla.com' },
+        
+        // ✅ SERVIDOR STUN LOCAL (opcional, si tienes uno)
+        { urls: 'stun:127.0.0.1:3478' },
+        
+        // ✅ TURN SERVER (opcional, para casos difíciles)
+        // Descomenta si tienes un servidor TURN disponible
+        /*
+        {
+            urls: 'turn:your-turn-server.com:3478',
+            username: 'user',
+            credential: 'pass'
+        }
+        */
+      ],
+      // ✅ MEJOR CONFIGURACIÓN ICE
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all'
     },
     enableLogging: true
   }

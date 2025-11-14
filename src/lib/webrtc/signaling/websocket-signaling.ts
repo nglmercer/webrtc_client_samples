@@ -95,6 +95,11 @@ export class WebSocketSignalingChannel implements ISignalingChannel {
         this.socket.on('disconnect', this.callbacks.onDisconnect);
         
         this.socket.on('RTCMultiConnection-Message', (data: any) => {
+            // 🎯 CRÍTICO: Ignorar mensajes que enviamos nosotros mismos
+            if (data.message && data.message.sender === this.userParams.userId) {
+                console.log(`[WebSocketSignaling] Ignorando mensaje propio de ${this.userParams.userId}`);
+                return;
+            }
             this.callbacks.onMessage(data);
         });
         

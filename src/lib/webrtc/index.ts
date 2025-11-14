@@ -49,13 +49,21 @@ import {
   VoiceWebRTCManager,
   type VoiceWebRTCCallbacks
 } from './webrtc_spec/webrtc-voice.js';
+
+import {
+  ScreenWebRTCManager,
+  type ScreenWebRTCCallbacks
+} from './webrtc_spec/webrtc-screen.js';
+
 export {
   DataWebRTCManager,
   MediaWebRTCManager,
   VoiceWebRTCManager,
+  ScreenWebRTCManager,
   type DataWebRTCCallbacks,
   type MediaWebRTCCallbacks,
   type VoiceWebRTCCallbacks,
+  type ScreenWebRTCCallbacks,
 }
 // Utilidades
 export {
@@ -130,6 +138,15 @@ export function createMediaManager(callbacks: MediaWebRTCCallbacks): MediaWebRTC
  */
 export function createVoiceManager(callbacks: VoiceWebRTCCallbacks): VoiceWebRTCManager {
   return new VoiceWebRTCManager(callbacks);
+}
+
+/**
+ * Crea un manager de screen sharing con la configuración actual
+ * @param callbacks Callbacks para eventos
+ * @returns Instancia de ScreenWebRTCManager
+ */
+export function createScreenManager(callbacks: ScreenWebRTCCallbacks): ScreenWebRTCManager {
+  return new ScreenWebRTCManager(callbacks);
 }
 
 // Re-importar configuración para uso directo

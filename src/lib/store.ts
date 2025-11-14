@@ -10,7 +10,7 @@ export interface Message {
 
 // Tipo para el estado de un par (peer)
 export interface PeerState {
-  status: 'negotiating' | 'connected' | 'disconnected';
+  status: 'negotiating' | 'connected' | 'disconnected' | 'error';
   // Podrías añadir más info como su nombre de usuario si lo envías al conectar
 }
 export interface VoiceChatState {

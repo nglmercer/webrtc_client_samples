@@ -23,8 +23,37 @@
         >
           <span class="video-label">{{ video.id }}</span>
         </div>
-        <div class="video-info">
-          <span>{{ video.id }}</span>
+        
+        <!-- Controles minimizables -->
+        <div class="video-controls-container">
+          <!-- Icono para mostrar/ocultar controles -->
+          <button 
+            class="controls-toggle-btn"
+            @click.stop="toggleControls"
+            :title="areControlsVisible ? 'Ocultar controles' : 'Mostrar controles'"
+          >
+            <svg class="controls-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2 2 .9 2 2 .9 2 2 2-.9 2-2zm0 2c6.63 0 12 5.37 12 12s-5.37 12-12-12-5.37-12-12-12zm-2 15l-2-2 7-7 7 7-2z"/>
+            </svg>
+          </button>
+          
+          <!-- Panel de controles -->
+          <transition name="controls-fade">
+            <div v-show="areControlsVisible" class="video-controls">
+              <div class="video-info">
+                <div class="flex items-center space-x-2">
+                  <span class="font-medium">
+                    {{ video.id }}
+                  </span>
+                  <!-- Indicadores de estado -->
+                  <div class="flex space-x-1">
+                    <span v-if="isMain" class="text-blue-400">👑</span>
+                    <span v-if="isFocused" class="text-yellow-400">⭐</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
         </div>
       </div>
     </slot>
@@ -32,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Props {
   video: any
@@ -46,6 +75,14 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits(['click', 'mouseenter', 'mouseleave'])
+
+// Estado reactivo para los controles
+const areControlsVisible = ref(false)
+
+// Toggle para mostrar/ocultar controles
+function toggleControls() {
+  areControlsVisible.value = !areControlsVisible.value
+}
 
 const getItemClasses = computed(() => props.itemClasses)
 const getItemStyles = computed(() => props.itemStyles)
@@ -131,5 +168,75 @@ const isMain = computed(() => props.videoState.isMain)
   align-items: center;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 12px;
+}
+
+/* Estilos para controles minimizables */
+.video-controls-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.controls-toggle-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 11;
+  backdrop-filter: blur(4px);
+}
+
+.controls-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.controls-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.video-controls {
+  width: 100%;
+  transform-origin: bottom;
+}
+
+.controls-fade-enter-active,
+.controls-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.controls-fade-enter-from {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.controls-fade-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.controls-fade-enter-to,
+.controls-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Asegurar que el icono esté siempre visible */
+.video-item:hover .controls-toggle-btn {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
